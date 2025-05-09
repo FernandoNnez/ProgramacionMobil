@@ -1,0 +1,2 @@
+/home/wiskas/StudioProjects/untitled1/android/app/.cxx/Debug/6t6g6720/x86/CMakeFiles/edit_cache.dir
+/home/wiskas/StudioProjects/untitled1/android/app/.cxx/Debug/6t6g6720/x86/CMakeFiles/rebuild_cache.dir

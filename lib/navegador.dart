@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:untitled1/screens/calendar.dart';
+import 'package:untitled1/screens/person.dart';
 import 'screens//welcome.dart';
 import 'screens/calculator.dart';
 import 'screens/locator.dart';
 import 'screens/counter.dart';
 import 'screens/handshake.dart';
+import 'screens/calendar.dart';
+import 'screens/person.dart';
 
 class Navegador extends StatefulWidget {
   const Navegador({super.key});
@@ -32,7 +36,9 @@ class _NavegadorState extends State<Navegador> {
       Welcome(titulo: "Bienvenida", cambiarPagina: _cambiarPagina),
       Handshake(titulo: "Saludo", nombre: _nombreUsuario, cambiarPagina: _cambiarPagina), // Pasar la función aquí
       Counter(titulo: "Contador"),
-      Locator(titulo: "Localizador")
+      Locator(titulo: "Localizador"),
+      Calendar(titulo: "Calendario"),
+      Person(titulo: "Person")
     ];
 
     return Scaffold(
@@ -61,6 +67,14 @@ class _NavegadorState extends State<Navegador> {
           BottomNavigationBarItem(
             icon: Icon(Icons.map),
             label: 'Localización',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.calendar_month),
+            label: 'Calendario',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'Person',
           ),
         ],
       ),

@@ -6,29 +6,33 @@ class Calculator extends StatefulWidget {
   final String titulo;
 
   @override
-  State<Calculator> createState() => _CalculadoraState();
+  State<Calculator> createState() => _CalculatorState();
 }
 
-class _CalculadoraState extends State<Calculator> {
+class _CalculatorState extends State<Calculator> {
   String _input = "";
+  String _output = "0";
 
   void _pressButton(String v) {
     setState(() {
       if (_esOperador(v) && (_input.isEmpty || _ultimoEsOperador())) {
         return;
       }
-
-      if (v == ".") {
-        if (_ultimoNumeroTienePunto()) return; // Evita múltiples puntos en un número
-      }
-
+      if (v == "." && _ultimoNumeroTienePunto()) return;
       if (v == "=") {
         _calcula();
         return;
       }
-
       _input += v;
     });
+  }
+
+  dynamic convertirSiEsEntero(String numeroStr) {
+    double numero = double.tryParse(numeroStr) ?? double.nan;
+
+    if (numero.isNaN) return "Error: No es un número válido";
+
+    return numero % 1 == 0 ? numero.toInt() : numero;
   }
 
   bool _esOperador(String v) {
@@ -42,53 +46,52 @@ class _CalculadoraState extends State<Calculator> {
   }
 
   bool _ultimoNumeroTienePunto() {
-    List<String> partes = _input.split(RegExp(r"[\+\-\*/%^]")); // Separa por operadores
+    List<String> partes = _input.split(RegExp(r"[+\-x/%^]"));
     if (partes.isEmpty) return false;
-    return partes.last.contains("."); // Si el último número ya tiene ".", no deja agregar otro
+    return partes.last.contains(".");
   }
 
   void _calcula() {
     try {
-      String expresion = _input.replaceAll("x", "*"); // Reemplazar 'x' por '*'
+      String expresion = _input.replaceAll("x", "*");
       List<String> tokens = expresion.split(RegExp(r"(\+|\-|\*|\/|\%|\^)"));
       List<String> operadores = expresion.split(RegExp(r"[0-9.]+")).where((e) => e.isNotEmpty).toList();
-
       if (tokens.length < 2 || operadores.length < 1) return;
 
-      double resultado = double.parse(tokens[0]);
+      List<double> numeros = tokens.map((e) => double.parse(e)).toList();
+      List<String> ops = List.from(operadores);
 
-      for (int i = 0; i < operadores.length; i++) {
-        double num = double.parse(tokens[i + 1]);
-        switch (operadores[i]) {
-          case "+":
-            resultado += num;
-            break;
-          case "-":
-            resultado -= num;
-            break;
-          case "*":
-            resultado *= num;
-            break;
-          case "/":
-            if (num != 0) {
-              resultado /= num;
-            } else {
-              _input = "Error";
-              return;
-            }
-            break;
-          case "%":
-            resultado %= num;
-            break;
-          case "^":
-            resultado = pow(resultado, num).toDouble();
-            break;
-        }
+      while (ops.contains("^")) {
+        int i = ops.indexOf("^");
+        numeros[i] = pow(numeros[i], numeros[i + 1]).toDouble();
+        numeros.removeAt(i + 1);
+        ops.removeAt(i);
       }
-
-      _input = resultado.toString();
+      while (ops.contains("%")) {
+        int i = ops.indexOf("%");
+        numeros[i] = numeros[i] % numeros[i + 1];
+        numeros.removeAt(i + 1);
+        ops.removeAt(i);
+      }
+      while (ops.contains("*") || ops.contains("/")) {
+        int i = ops.indexWhere((op) => op == "*" || op == "/");
+        if (ops[i] == "/" && numeros[i + 1] == 0) {
+          _output = "Error";
+          return;
+        }
+        numeros[i] = ops[i] == "*" ? numeros[i] * numeros[i + 1] : numeros[i] / numeros[i + 1];
+        numeros.removeAt(i + 1);
+        ops.removeAt(i);
+      }
+      while (ops.isNotEmpty) {
+        numeros[0] = ops[0] == "+" ? numeros[0] + numeros[1] : numeros[0] - numeros[1];
+        numeros.removeAt(1);
+        ops.removeAt(0);
+      }
+      _output = convertirSiEsEntero(numeros.first.toString()).toString();
     } catch (e) {
-      _input = "Error";
+      print(e);
+      _output = "Error";
     }
     setState(() {});
   }
@@ -96,13 +99,15 @@ class _CalculadoraState extends State<Calculator> {
   void _limpiar() {
     setState(() {
       _input = "";
+      _output = "0";
     });
   }
 
   void _borrar() {
     setState(() {
-      if (_input.isEmpty) return;
-      _input = _input.substring(0, _input.length - 1);
+      if (_input.isNotEmpty) {
+        _input = _input.substring(0, _input.length - 1);
+      }
     });
   }
 
@@ -116,12 +121,14 @@ class _CalculadoraState extends State<Calculator> {
           children: <Widget>[
             Container(
               width: 350,
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(15),
               color: Colors.black87,
-              child: Text(
-                _input.isEmpty ? "0" : _input,
-                textAlign: TextAlign.end,
-                style: const TextStyle(fontSize: 55, color: Colors.white),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(_input.isEmpty ? "0" : _input, style: const TextStyle(fontSize: 25, color: Colors.white)),
+                  Text(_output, style: const TextStyle(fontSize: 40, color: Colors.lightGreenAccent)),
+                ],
               ),
             ),
             Column(
@@ -147,7 +154,7 @@ class _CalculadoraState extends State<Calculator> {
         return Padding(
           padding: const EdgeInsets.all(5),
           child: MaterialButton(
-            height: 95,
+            height: 80,
             minWidth: 80,
             color: Theme.of(context).primaryColor,
             child: Text(
