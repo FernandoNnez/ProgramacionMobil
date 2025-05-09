@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "815961165291",
+    "project_id": "bbba-database",
+    "storage_bucket": "bbba-database.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:815961165291:android:be911b2a11e7f6c5f4ddae",
+        "android_client_info": {
+          "package_name": "com.example.bbba"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBfJTvGJwtYrX1UM_Pvb9-lXTBuSQK1xpU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
