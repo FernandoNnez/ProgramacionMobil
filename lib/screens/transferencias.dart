@@ -44,7 +44,7 @@ class _TransferenciasState extends State<Transferencias> {
       return;
     }
 
-    // Buscar destinatario
+    // Buscar destinatario por campo 'email'
     final recipientQuery = await FirebaseFirestore.instance
         .collection("users")
         .where("email", isEqualTo: recipientEmail)
@@ -56,20 +56,32 @@ class _TransferenciasState extends State<Transferencias> {
       return;
     }
 
-    final recipientId = recipientQuery.docs.first.id;
+    final recipientDoc = recipientQuery.docs.first;
+    final recipientId = recipientDoc.id;
 
-    // Transacción
+    if (recipientId == uid) {
+      _showMessage("No puedes transferirte a ti mismo");
+      return;
+    }
+
     final senderRef = FirebaseFirestore.instance.collection("users").doc(uid);
     final recipientRef = FirebaseFirestore.instance.collection("users").doc(recipientId);
 
     await FirebaseFirestore.instance.runTransaction((transaction) async {
-      transaction.update(senderRef, {"balance": _balance - amount});
+      final senderSnap = await transaction.get(senderRef);
+      final newSenderBalance = (senderSnap.data()?["balance"] ?? 0).toDouble() - amount;
+
+      if (newSenderBalance < 0) {
+        throw Exception("Saldo insuficiente durante transacción");
+      }
+
+      transaction.update(senderRef, {"balance": newSenderBalance});
       transaction.update(recipientRef, {
         "balance": FieldValue.increment(amount),
       });
     });
 
-    await _registerTransaction("Transferencia", amount, recipientEmail);
+    await _registerTransaction("Transferencia", amount, recipientEmail, recipientId);
 
     setState(() {
       _balance -= amount;
@@ -80,21 +92,35 @@ class _TransferenciasState extends State<Transferencias> {
     _showMessage("Transferencia exitosa");
   }
 
-  Future<void> _registerTransaction(String type, double amount, String recipientEmail) async {
-    if (uid == null) return;
+  Future<void> _registerTransaction(String type, double amount, String recipientEmail, String recipientId) async {
+    final sender = FirebaseAuth.instance.currentUser;
+    if (sender == null) return;
 
-    await FirebaseFirestore.instance
+    final now = Timestamp.now();
+
+    final senderRef = FirebaseFirestore.instance
         .collection("users")
-        .doc(uid)
-        .collection("transactions")
-        .add({
+        .doc(sender.uid)
+        .collection("transactions");
+
+    final recipientRef = FirebaseFirestore.instance
+        .collection("users")
+        .doc(recipientId)
+        .collection("transactions");
+
+    await senderRef.add({
       "type": type,
       "amount": amount,
-      "date": Timestamp.now(),
+      "date": now,
       "description": "A: $recipientEmail",
     });
 
-    //Navigator.pop(context);
+    await recipientRef.add({
+      "type": "Ingreso",
+      "amount": amount,
+      "date": now,
+      "description": "De: ${sender.email}",
+    });
   }
 
 

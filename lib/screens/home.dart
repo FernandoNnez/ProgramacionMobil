@@ -22,6 +22,7 @@ class _HomeState extends State<Home> {
   void initState() {
     super.initState();
     _loadBalance();
+    _checkAndSaveEmail();
   }
 
   Future<void> _loadBalance() async {
@@ -42,6 +43,19 @@ class _HomeState extends State<Home> {
         .snapshots()
         .map((snapshot) => snapshot.docs.map((doc) => doc.data()).toList());
   }
+
+  Future<void> _checkAndSaveEmail() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final docRef = FirebaseFirestore.instance.collection("users").doc(user.uid);
+    final docSnapshot = await docRef.get();
+
+    if (docSnapshot.exists && !(docSnapshot.data()?.containsKey("email") ?? false)) {
+      await docRef.update({"email": user.email});
+    }
+  }
+
 
   String _monthName(int month) {
     const months = [
@@ -122,7 +136,13 @@ class _HomeState extends State<Home> {
                             color: type == "Ingreso" ? Colors.green : Colors.redAccent,
                           ),
                           title: Text(type),
-                          subtitle: Text(formattedDate),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (tx["description"] != null) Text(tx["description"]),
+                                Text(formattedDate),
+                              ],
+                            ),
                           trailing: Text(
                             "${type == "Ingreso" ? "+" : "-"}\$${amount.toStringAsFixed(2)}",
                             style: TextStyle(
