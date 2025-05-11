@@ -94,7 +94,6 @@ class _HomeState extends State<Home> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ✅ Saldo dinámico
             const Text(
               "Saldo disponible",
               style: TextStyle(fontSize: 16, color: Colors.black54),
@@ -180,7 +179,7 @@ class _HomeState extends State<Home> {
                       await Navigator.push(context, MaterialPageRoute(
                         builder: (_) => Ingresos(),
                       ));
-                      _loadBalance(); // Actualiza el saldo al regresar
+                      _loadBalance();
                     },
                     icon: const Icon(Icons.account_balance_wallet),
                     label: const Text("Ingresar / Retirar"),
@@ -199,7 +198,7 @@ class _HomeState extends State<Home> {
                       await Navigator.push(context, MaterialPageRoute(
                         builder: (_) => Transferencias(),
                       ));
-                      _loadBalance(); // Actualiza el saldo al regresar
+                      _loadBalance();
                     },
                     icon: const Icon(Icons.send),
                     label: const Text("Transferir"),

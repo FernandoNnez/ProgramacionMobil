@@ -44,7 +44,6 @@ class _TransferenciasState extends State<Transferencias> {
       return;
     }
 
-    // Buscar destinatario por campo 'email'
     final recipientQuery = await FirebaseFirestore.instance
         .collection("users")
         .where("email", isEqualTo: recipientEmail)
