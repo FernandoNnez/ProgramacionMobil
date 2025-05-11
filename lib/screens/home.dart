@@ -3,6 +3,7 @@ import 'package:bbba/screens/transferencias.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:bbba/screens/login.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -13,7 +14,6 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   static const Color bbvaBlue = Color(0xFF0033A0);
-  static const Color bbvaLightGray = Color(0xFFF5F5F5);
 
   double _balance = 0.0;
   final uid = FirebaseAuth.instance.currentUser?.uid;
@@ -70,10 +70,24 @@ class _HomeState extends State<Home> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text("Inicio"),
+        title: const Text("Inicio BBBA"),
         centerTitle: true,
         backgroundColor: bbvaBlue,
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () async {
+              await FirebaseAuth.instance.signOut();
+              if (context.mounted) {
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (_) => const Login()),
+                      (Route<dynamic> route) => false,
+                );
+              }
+            },
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16),
