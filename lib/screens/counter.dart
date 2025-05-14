@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class Counter extends StatefulWidget {
   const Counter({super.key, required this.titulo});
@@ -16,12 +17,9 @@ class _CounterState extends State<Counter> {
   String _replace = '*';
   String _toReplace = 'o';
   int _incrementSize = 1;
-  final Random _random = Random();
   double _emojiSize = 60.0;
-
-  final DocumentReference counterDoc = FirebaseFirestore.instance
-      .collection("cloudCollection")
-      .doc("Counter");
+  final Random _random = Random();
+  final uid = FirebaseAuth.instance.currentUser?.uid;
 
   @override
   void initState() {
@@ -30,12 +28,18 @@ class _CounterState extends State<Counter> {
   }
 
   Future<void> _loadCounterFromFirestore() async {
-    final doc = await counterDoc.get();
+    if (uid == null) return;
+    final doc = await FirebaseFirestore.instance
+        .collection("users")
+        .doc(uid)
+        .collection("data")
+        .doc("Counter")
+        .get();
+
     if (doc.exists) {
-      final data = doc.data() as Map<String, dynamic>;
       setState(() {
-        _counter = data['counter'] ?? 0;
-        _randomText = data['randomText'] ?? "";
+        _counter = doc.data()?["counter"] ?? 0;
+        _randomText = doc.data()?["randomText"] ?? "";
         _emojiSize = 60.0 + (_counter * _incrementSize).toDouble();
         _emojiSize = _emojiSize.clamp(40.0, 120.0);
       });
@@ -43,14 +47,26 @@ class _CounterState extends State<Counter> {
   }
 
   Future<void> _saveCounterToFirestore() async {
-    await counterDoc.set({
-      'counter': _counter,
-      'randomText': _randomText,
-    });
+    if (uid == null) return;
+    final docRef = FirebaseFirestore.instance
+        .collection("users")
+        .doc(uid)
+        .collection("data")
+        .doc("Counter");
+    try {
+      await docRef.set({
+        'counter': _counter,
+        'randomText': _randomText,
+      }, SetOptions(merge: true));
+    } catch (e) {
+      debugPrint("Error guardando datos: $e");
+    }
   }
 
+
+
   String _getRandomChar() {
-    int asciiCode = _random.nextInt(24) + 98;
+    int asciiCode = _random.nextInt(24) + 98; // de la a a la z
     return String.fromCharCode(asciiCode);
   }
 

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class Welcome extends StatefulWidget {
-  final Function(int, String) cambiarPagina; // Recibe función para cambiar pantalla
+  final Function(int, String) cambiarPagina; // fx de nav
   const Welcome({super.key, required this.titulo, required this.cambiarPagina});
   final String titulo;
 

@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -19,7 +20,7 @@ class _CalendarState extends State<Calendar> {
   @override
   void initState() {
     super.initState();
-    _loadEventsForSelectedDate();
+    _loadEventsForSelectedDate(); //obtiene data
   }
 
   @override
@@ -35,7 +36,7 @@ class _CalendarState extends State<Calendar> {
               onSelectionChanged: (CalendarSelectionDetails details) {
                 setState(() {
                   _selectedDate = details.date ?? DateTime.now();
-                  _loadEventsForSelectedDate();
+                  _loadEventsForSelectedDate(); //refr
                 });
               },
             ),
@@ -73,60 +74,98 @@ class _CalendarState extends State<Calendar> {
   }
 
   Future<void> _loadEventsForSelectedDate() async {
-    QuerySnapshot querySnapshot = await FirebaseFirestore.instance
-        .collection("cloudCollection")
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final doc = await FirebaseFirestore.instance
+        .collection("users")
+        .doc(user.uid)
+        .collection("data")
         .doc("Calendar")
-        .collection("events")
-        .where("start",
-        isGreaterThanOrEqualTo: Timestamp.fromDate(_selectedDate))
-        .where("start",
-        isLessThan:
-        Timestamp.fromDate(_selectedDate.add(const Duration(days: 1))))
         .get();
 
-    List<Meeting> fetchedEvents = querySnapshot.docs.map((doc) {
-      return Meeting(
-        id: doc.id,
-        eventName: doc["eventName"],
-        from: (doc["start"] as Timestamp).toDate(),
-        to: (doc["end"] as Timestamp).toDate(),
-        allDay: doc["allDay"],
-        color: doc["color"],
-      );
-    }).toList();
+    if (!doc.exists) {
+      setState(() {
+        _events = [];
+      });
+      return;
+    }
+
+    final List<dynamic> eventsData = doc.data()?["events"] ?? [];
+    final selectedStart = DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day);
+    final selectedEnd = selectedStart.add(const Duration(days: 1));
+
+    final filtered = eventsData.where((e) {
+      final start = (e["start"] as Timestamp).toDate();
+      return start.isAfter(selectedStart.subtract(const Duration(seconds: 1))) &&
+          start.isBefore(selectedEnd);
+    }).map((e) => Meeting(
+      id: e["id"],
+      eventName: e["eventName"],
+      from: (e["start"] as Timestamp).toDate(),
+      to: (e["end"] as Timestamp).toDate(),
+      allDay: e["allDay"],
+      color: e["color"],
+    )).toList();
 
     setState(() {
-      _events = fetchedEvents;
+      _events = filtered;
     });
   }
 
-  Future<void> _addEvent(String name, DateTime start, DateTime end, bool allDay,
-      int color) async {
-    await FirebaseFirestore.instance
-        .collection("cloudCollection")
-        .doc("Calendar")
-        .collection("events")
-        .add({
+  Future<void> _addEvent(String name, DateTime start, DateTime end, bool allDay, int color) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final docRef = FirebaseFirestore.instance
+        .collection("users")
+        .doc(user.uid)
+        .collection("data")
+        .doc("Calendar");
+
+    final doc = await docRef.get();
+    final List<dynamic> existingEvents = doc.data()?["events"] ?? [];
+
+    final newEvent = {
+      "id": DateTime.now().millisecondsSinceEpoch.toString(),
       "eventName": name,
       "start": Timestamp.fromDate(start),
       "end": Timestamp.fromDate(end),
       "allDay": allDay,
       "color": color,
-    });
+    };
 
-    _loadEventsForSelectedDate(); // Refresh ddddd
+    existingEvents.add(newEvent);
+
+    await docRef.set({
+      "events": existingEvents,
+    }, SetOptions(merge: true));
+
+    _loadEventsForSelectedDate(); // refresca daaah
   }
+
 
   Future<void> _deleteEvent(String eventId) async {
-    await FirebaseFirestore.instance
-        .collection("cloudCollection")
-        .doc("Calendar")
-        .collection("events")
-        .doc(eventId)
-        .delete();
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
 
-    _loadEventsForSelectedDate();
+    final docRef = FirebaseFirestore.instance
+        .collection("users")
+        .doc(user.uid)
+        .collection("data")
+        .doc("Calendar");
+
+    final doc = await docRef.get();
+    if (!doc.exists) return;
+
+    final List<dynamic> existingEvents = doc.data()?["events"] ?? [];
+    existingEvents.removeWhere((e) => e["id"] == eventId);
+
+    await docRef.set({"events": existingEvents}, SetOptions(merge: true));
+    _loadEventsForSelectedDate();// otro refrs
   }
+
+
 
   void _addEventDialog() {
     TextEditingController eventController = TextEditingController();

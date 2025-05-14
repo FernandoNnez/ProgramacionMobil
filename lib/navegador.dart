@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:untitled1/screens/calendar.dart';
-import 'package:untitled1/screens/person.dart';
 import 'screens//welcome.dart';
 import 'screens/calculator.dart';
 import 'screens/locator.dart';
@@ -34,7 +32,7 @@ class _NavegadorState extends State<Navegador> {
     final List<Widget> _screens = [
       Calculator(titulo: "Calculadora"),
       Welcome(titulo: "Bienvenida", cambiarPagina: _cambiarPagina),
-      Handshake(titulo: "Saludo", nombre: _nombreUsuario, cambiarPagina: _cambiarPagina), // Pasar la función aquí
+      Handshake(titulo: "Saludo", nombre: _nombreUsuario, cambiarPagina: _cambiarPagina), // Pasa la fx
       Counter(titulo: "Contador"),
       Locator(titulo: "Localizador"),
       Calendar(titulo: "Calendario"),
@@ -46,7 +44,7 @@ class _NavegadorState extends State<Navegador> {
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         currentIndex: _paginaActual,
-        onTap: (index) => _cambiarPagina(index), // Cambia la página
+        onTap: (index) => _cambiarPagina(index), // Cambiooooooo
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.calculate),
